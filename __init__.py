@@ -12,6 +12,12 @@ def create_app():
     app = Flask(__name__)
     redisClient = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
+    def viewKey(video_id):
+        return f"video:{video_id}:views"
+    
+    def videoKey(video_id):
+        return f"video:{video_id}" 
+    
     @app.route('/user/', methods=['PUT'])
     def put_user():
         reqBody = request.json
@@ -50,6 +56,56 @@ def create_app():
         else:
             return { "message": "Paskyra nerasta." }, 404
 
+    @app.route('/video', methods=['POST'])
+    def register_video():
+        reqBody = request.json
+        video_id = reqBody.get("id")
+        description = reqBody.get("description")
+        length_in_s = reqBody.get("lengthInS")
+        if redisClient.exists(videoKey(video_id)):
+            return {"message": "Toks video jau egzistuoja"}, 400
+        if video_id and description and isinstance(length_in_s, int):
+            redisClient.hmset(videoKey(video_id), {
+                "description": description,
+                "lengthInS": length_in_s
+            })
+            return {"message": "Video uzregitruotas"}, 200
+        
+    @app.route('/video/<video_id>', methods=['GET'])
+    def get_video(video_id):
+        try:
+            video_data = redisClient.hgetall(videoKey(video_id))
+
+            if video_data:
+                # No need to decode; values are already strings
+                return video_data, 200  # Return video information
+            else:
+                return {"message": "Video ID nerastas"}, 404  # Video ID not found
+        except Exception as e:
+            return {"message": str(e)}, 500  # Return the error message for debugging
+
+        
+    @app.route('/video/<video_id>/views', methods=['POST'])
+    def register_view(video_id):
+        reqBody = request.json
+        user_id = reqBody.get("userId")
+        if not redisClient.exists(videoKey(video_id)):
+            return {"message": "Video ID nerastas"}, 404
+
+        if re.search(userIdRegex, user_id) is not None:
+            redisClient.incr(viewKey(video_id))
+            return '', 200 
+        else:
+            return {"message": "Netinkamas naudotojo ID"}, 404
+        
+    @app.route('/video/<video_id>/views', methods=['GET'])
+    def get_views(video_id):
+        view_count = redisClient.get(viewKey(video_id))
+        if view_count is not None:
+            return {"views": int(view_count)}, 200 
+        else:
+            return {"message": "ID nerastas"}, 404
+        
     return app
-    
+
 
