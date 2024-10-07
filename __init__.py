@@ -4,7 +4,6 @@ import redis
 from flask import (Flask, request, jsonify, abort)
 
 userIdRegex = "^[A-Za-z0-9]{1,15}$"
-# userNameRegex = "^[A-Za-z\-]{1,15}$"
 
 def create_app():
     app = Flask(__name__)
@@ -39,8 +38,6 @@ def create_app():
     def get_user(userId):
         if re.search(userIdRegex, userId) != None:
             userName = redisClient.get(userId)
-            
-            #userName.pop('watchedVideos')
 
             if (userName != None):
                 name = userName.split(':')
@@ -88,7 +85,7 @@ def create_app():
 
             if video_data:
                 video_data.pop('views')
-                # No need to decode; values are already strings
+
                 return video_data, 200  # Return video information
             else:
                 return {"message": "Video ID nerastas"}, 404  # Video ID not found
@@ -104,8 +101,8 @@ def create_app():
 
         if re.search(userIdRegex, user_id) is not None:
             redisClient.incr(viewKey(video_id))
-            if (not redisClient.exists(watchedVideoKey(user_id))):
-                redisClient.rpush(watchedVideoKey(user_id), video_id)
+            # if (not redisClient.exists(watchedVideoKey(user_id))):
+            redisClient.rpush(watchedVideoKey(user_id), video_id)
             return {"message": "Peržiūra įregistruota."}, 200 
         else:
             return {"message": "Netinkamas naudotojo ID"}, 404
@@ -121,9 +118,14 @@ def create_app():
     @app.route('/user/<userId>/views', methods=['GET'])
     def get_watched_videos(userId):
         if not redisClient.exists(userId):
-            return {"message": "Toks vartotojas neegzistuoja sistemoje"}, 404
+            return {"message": "Toks vartotojas neegzistuoja sistemoje."}, 404
         watched_videos = redisClient.lrange(watchedVideoKey(userId), 0, -1)
         if watched_videos:
             return {"watchedVideos": watched_videos}, 200
+        
+    @app.route('/flushall', methods=['POST'])
+    def flushAll():
+        redisClient.flushall()
+        return {"message": "Raktai pašalinti."}, 200
         
     return app
