@@ -3,10 +3,8 @@ import werkzeug
 import redis
 from flask import (Flask, request, jsonify, abort)
 
-licenseRegex = "^[A-Z0-9]{1,7}$"
-
 userIdRegex = "^[A-Za-z0-9]{1,15}$"
-userNameRegex = "^[A-Za-z\-]{1,15}$"
+# userNameRegex = "^[A-Za-z\-]{1,15}$"
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +16,9 @@ def create_app():
     def videoKey(video_id):
         return f"video:{video_id}" 
     
+    def watchedVideoKey(user_id):
+        return f"user:{user_id}:watched_videos"
+    
     @app.route('/user/', methods=['PUT'])
     def put_user():
         reqBody = request.json
@@ -27,13 +28,19 @@ def create_app():
         firstName = str(reqBody.get("firstName"))
         lastName = str(reqBody.get("lastName"))
         userName = firstName + ":" + lastName
+        watchedVideos = []
         redisClient.set(userId, userName)
+        for video in watchedVideos:
+            redisClient.rpush(watchedVideoKey(userId), video)
+
         return { "message": 'Vartotojo registracija sėkminga.'}, 200
         
     @app.route('/user/<userId>', methods=['GET'])
     def get_user(userId):
         if re.search(userIdRegex, userId) != None:
             userName = redisClient.get(userId)
+            
+            #userName.pop('watchedVideos')
 
             if (userName != None):
                 name = userName.split(':')
@@ -56,7 +63,7 @@ def create_app():
         else:
             return { "message": "Paskyra nerasta." }, 404
 
-    @app.route('/video', methods=['POST'])
+    @app.route('/video', methods=['PUT'])
     def register_video():
         reqBody = request.json
         video_id = reqBody.get("id")
@@ -67,9 +74,12 @@ def create_app():
         if video_id and description and isinstance(length_in_s, int):
             redisClient.hmset(videoKey(video_id), {
                 "description": description,
-                "lengthInS": length_in_s
+                "lengthInS": length_in_s,
+                "views": 0
             })
             return {"message": "Video uzregitruotas"}, 200
+        else :
+            return {"message": "Netinkami duomenys"}, 400
         
     @app.route('/video/<video_id>', methods=['GET'])
     def get_video(video_id):
@@ -77,6 +87,7 @@ def create_app():
             video_data = redisClient.hgetall(videoKey(video_id))
 
             if video_data:
+                video_data.pop('views')
                 # No need to decode; values are already strings
                 return video_data, 200  # Return video information
             else:
@@ -84,7 +95,6 @@ def create_app():
         except Exception as e:
             return {"message": str(e)}, 500  # Return the error message for debugging
 
-        
     @app.route('/video/<video_id>/views', methods=['POST'])
     def register_view(video_id):
         reqBody = request.json
@@ -94,7 +104,9 @@ def create_app():
 
         if re.search(userIdRegex, user_id) is not None:
             redisClient.incr(viewKey(video_id))
-            return '', 200 
+            if (not redisClient.exists(watchedVideoKey(user_id))):
+                redisClient.rpush(watchedVideoKey(user_id), video_id)
+            return {"message": "Peržiūra įregistruota."}, 200 
         else:
             return {"message": "Netinkamas naudotojo ID"}, 404
         
@@ -106,6 +118,12 @@ def create_app():
         else:
             return {"message": "ID nerastas"}, 404
         
+    @app.route('/user/<userId>/views', methods=['GET'])
+    def get_watched_videos(userId):
+        if not redisClient.exists(userId):
+            return {"message": "Toks vartotojas neegzistuoja sistemoje"}, 404
+        watched_videos = redisClient.lrange(watchedVideoKey(userId), 0, -1)
+        if watched_videos:
+            return {"watchedVideos": watched_videos}, 200
+        
     return app
-
-
