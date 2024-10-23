@@ -128,9 +128,9 @@ def cleanup_database():
     ordersColl.delete_many({})
 
     db.counters.update_one(
-    {'_id': 'orderid'},
-    {'$set': {'sequence_value': 0}},
-    upsert=True
+        {'_id': 'orderid'},
+        {'$set': {'sequence_value': 0}},
+        upsert=True
     )
 
     return jsonify({"message": "Data deleted"}), 204  # Return 204 No Content on successful cleanup
