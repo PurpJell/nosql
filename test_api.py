@@ -2,7 +2,7 @@ import math
 import requests
 import pytest
 
-HOST = "localhost"
+HOST = "127.0.0.1"
 PORT = 5000
 
 @pytest.fixture(scope='module', autouse=True)
@@ -104,24 +104,24 @@ def test_placing_orders_and_statistics():
     top_products = get_top_products()
 
     assert len(top_products) == 3
-    assert top_products[0]['productName'] == "Banana"
+    assert top_products[0]['name'] == "Banana"
     assert top_products[0]['totalQuantity'] == 10 + 10 + 10 + 2
 
-    assert top_products[1]['productName'] == "Orange"
+    assert top_products[1]['name'] == "Orange"
     assert top_products[1]['totalQuantity'] == 5 + 5 + 5 + 1
 
-    assert top_products[2]['productName'] == "Tomato"
+    assert top_products[2]['name'] == "Tomato"
     assert top_products[2]['totalQuantity'] == 2 + 4 + 1
 
     top_clients = get_top_clients()
 
     assert len(top_clients) == 2
-    assert top_clients[0]['clientId'] == client_id
-    assert top_clients[0]['clientName'] == "John Smith"
+    assert top_clients[0]['id'] == client_id
+    assert top_clients[0]['name'] == "John Smith"
     assert top_clients[0]['totalOrders'] == 4
 
-    assert top_clients[1]['clientId'] == client2_id
-    assert top_clients[1]['clientName'] == "Jane Doe"
+    assert top_clients[1]['id'] == client2_id
+    assert top_clients[1]['name'] == "Jane Doe"
     assert top_clients[1]['totalOrders'] == 2
 
     delete_client(client_id)
@@ -136,7 +136,7 @@ def test_placing_orders_and_statistics():
 def register_new_client(client_id, name, email):
     response = requests.put(f'http://{HOST}:{PORT}/clients', json={'id': client_id, 'name': name, 'email': email})
     assert response.status_code == 201
-    return response.json()['clientId']
+    return response.json()['id']
 
 def get_client_raw(id):
     response = requests.get(f'http://{HOST}:{PORT}/clients/{id}')
