@@ -294,14 +294,5 @@ def cleanup():
     
     return jsonify({"message": "Cleanup completed."}), 200
 
-@app.route('/channels/<channel_id>/len', methods=['GET'])
-def get_channel_messages_count(channel_id):
-    select_query = SimpleStatement("SELECT text FROM channel_messages WHERE channel_id = %s")
-    result = session.execute(select_query, (channel_id,))
-    
-    messages = [row.text for row in result]
-    return jsonify({"count": len(messages)}), 200
-
-
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5000, debug=False)
