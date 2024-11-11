@@ -14,9 +14,11 @@ ordersColl = db["orders"]
 @app.route('/clients/<clientId>', methods=['GET'])
 def get_client(clientId):
     # Retrieve the client document by clientId
-    client = clientsColl.find_one({"id": clientId}, {"_id": 0})  # Hide the MongoDB ObjectID in response
+    client = clientsColl.find_one({"_id": clientId})
     
     if client:
+        # Rename _id to id in the response
+        client['id'] = client.pop('_id')
         return jsonify({"message": "Client details", "client": client}), 200
     else:
         return jsonify({"error": "Client not found"}), 404
@@ -31,29 +33,33 @@ def register_client():
         return jsonify({"error": "Invalid input, missing id, name or email"}), 400
 
     # Check if a document with the same id already exists
-    existing_client = clientsColl.find_one({"id": new_data['id']})
+    existing_client = clientsColl.find_one({"_id": new_data['id']})
     if existing_client:
         return jsonify({"error": "Client with this id already exists"}), 400  # Conflict error
+    
+    # Rename 'id' to '_id' for MongoDB
+    if 'id' in new_data:
+        new_data['_id'] = new_data.pop('id')
 
     # Insert the new document into the collection
     clientsColl.insert_one(new_data)
-    return jsonify({"message": "Client registered successfully", "clientId": new_data['id']}), 201
+    return jsonify({"message": "Client registered successfully", "id": new_data['_id']}), 201
 
 @app.route('/clients/<clientId>', methods=['DELETE'])
 def delete_client(clientId):
     # Find and delete the client by clientId
-    client = clientsColl.find_one({"id": clientId})
+    client = clientsColl.find_one({"_id": clientId})
 
     if not client:
         return jsonify({"error": "Client not found"}), 404
 
     # Delete the client from the clients collection
-    clientsColl.delete_one({"id": clientId})
+    clientsColl.delete_one({"_id": clientId})
     
     # Delete all orders associated with the client
     ordersColl.delete_many({"clientId": clientId})
 
-    return jsonify({"message": "Client deleted "}), 200 # nes 204 neduoda contento !!!!!!!!!!!!!!!!!
+    return jsonify({"message": "Client deleted"}), 200 # nes 204 neduoda contento !!!!!!!!!!!!!!!!!
 
 @app.route('/products', methods=['PUT'])
 def create_product():
@@ -65,7 +71,7 @@ def create_product():
         return jsonify({"error": "Invalid input, missing name or price"}), 400
 
     # Insert the new product into the products collection
-    existing_product = productsColl.find_one({"id": new_product['id']})
+    existing_product = productsColl.find_one({"_id": new_product['id']})
     if existing_product:
         return jsonify({"error": "Product with this id already exists"}), 409  # Conflict error
 
@@ -74,9 +80,13 @@ def create_product():
     if existing_product_by_name:
         return jsonify({"error": "Product with this name already exists"}), 409  # Conflict error
 
+    # Rename 'id' to '_id' for MongoDB
+    if 'id' in new_product:
+        new_product['_id'] = new_product.pop('id')
+
     productsColl.insert_one(new_product)
     
-    return jsonify({"message": "Product registered successfully", "productId": new_product['id']}), 201
+    return jsonify({"message": "Product registered successfully", "productId": new_product['_id']}), 201
 
 @app.route('/products', methods=['GET'])
 def list_products():
@@ -85,10 +95,10 @@ def list_products():
 
     if category:
         # If a category is specified, filter products by category
-        products = list(productsColl.find({"category": category}, {"_id": 0}))  # Exclude MongoDB ObjectID from the response
+        products = list(productsColl.find({"category": category}))
     else:
         # If no category is specified, return all products
-        products = list(productsColl.find({}, {"_id": 0}))  # Exclude MongoDB ObjectID from the response
+        products = list(productsColl.find({}))
 
     return jsonify(products), 200
 
@@ -96,10 +106,13 @@ def list_products():
 def get_product_details(productId):
 
     # Find the product by productId
-    product = productsColl.find_one({"id": productId}, {"_id": 0})  # Exclude MongoDB ObjectID from the response
+    product = productsColl.find_one({"_id": productId})
 
     if not product:
         return jsonify({"error": "Product not found"}), 404  # Return 404 if the product is not found
+
+    # Rename _id to id in the response
+    product['id'] = product.pop('_id')
 
     return jsonify({"message": "Product details", "product": product}), 200  # Return the product details with a 200 status
 
@@ -107,13 +120,13 @@ def get_product_details(productId):
 def delete_product(productId):
 
     # Find the product by productId
-    product = productsColl.find_one({"id": productId})
+    product = productsColl.find_one({"_id": productId})
 
     if not product:
         return jsonify({"error": "Product not found"}), 404  # Return 404 if the product is not found
 
     # Delete the product from the products collection
-    productsColl.delete_one({"id": productId})
+    productsColl.delete_one({"_id": productId})
 
     return jsonify({"message": "Product deleted"}), 200 #Vel 204 neduoda zinutes  # Return 204 status code on successful deletion
 
@@ -128,9 +141,9 @@ def cleanup_database():
     ordersColl.delete_many({})
 
     db.counters.update_one(
-    {'_id': 'orderid'},
-    {'$set': {'sequence_value': 0}},
-    upsert=True
+        {'_id': 'orderid'},
+        {'$set': {'sequence_value': 0}},
+        upsert=True
     )
 
     return jsonify({"message": "Data deleted"}), 204  # Return 204 No Content on successful cleanup
@@ -146,16 +159,16 @@ def create_order():
         return jsonify({"error": "Invalid input, missing clientId, or items"}), 400
     
     # Check if the client exists
-    client = clientsColl.find_one({"id": new_order['clientId']})
+    client = clientsColl.find_one({"_id": new_order['clientId']})
     if not client:
         return jsonify({"error": "Client not found"}), 404
 
-    new_order['id'] = get_next_sequence_value('orderid')
-    
+    new_order['_id'] = get_next_sequence_value('orderid')
+
     # Insert the new order into the orders collection
     ordersColl.insert_one(new_order)
 
-    return jsonify({"message": "Order created", "orderId": new_order['id']}), 201
+    return jsonify({"message": "Order created", "orderId": new_order['_id']}), 201
 
 
 @app.route('/clients/<clientId>/orders', methods=['GET'])
@@ -163,6 +176,10 @@ def get_client_orders(clientId):
 
     # Find all orders for the client
     orders = list(ordersColl.find({"clientId": clientId}, {"_id": 0}))
+
+    # Rename _id to id in the response
+    for order in orders:
+        order['id'] = order.pop('clientId')
 
     return jsonify({"message": "Client orders", "orders": orders}), 200
 
@@ -178,7 +195,7 @@ def get_top_clients():
             "$lookup": {
                 "from": "clients",
                 "localField": "_id",
-                "foreignField": "id",
+                "foreignField": "_id",
                 "as": "client_info"
             }
         },
@@ -186,9 +203,9 @@ def get_top_clients():
         {
             "$project": {
                 "_id": 0,
-                "clientId": "$_id",
+                "id": "$_id",
                 "totalOrders": 1,
-                "clientName": "$client_info.name"
+                "name": "$client_info.name"
             }
         }
     ]
@@ -211,7 +228,7 @@ def get_top_products():
                 "$lookup": {
                     "from": "products",
                     "localField": "_id",
-                    "foreignField": "id",
+                    "foreignField": "_id",
                     "as": "product_info"
                 }
             },
@@ -221,7 +238,7 @@ def get_top_products():
                     "_id": 0,
                     "productId": "$_id",
                     "totalQuantity": 1,
-                    "productName": "$product_info.name"
+                    "name": "$product_info.name"
                 }
             }
         ]
@@ -245,7 +262,7 @@ def get_total_order_value():
         {"$lookup": {
             "from": "products",
             "localField": "items.productId",
-            "foreignField": "id",
+            "foreignField": "_id",
             "as": "product_info"
         }},
         {"$unwind": "$product_info"},
