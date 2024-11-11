@@ -30,24 +30,13 @@ def setup():
     """
     session.execute(create_tables_query)
 
-    
-    create_tables_query ="""
-    CREATE TABLE IF NOT EXISTS messages (
-        text TEXT,
-        author TEXT,
-        timestamp INT,
-        PRIMARY KEY (text, author)
-    );
-    """
-    session.execute(create_tables_query)
-
     create_tables_query = """
     CREATE TABLE IF NOT EXISTS channel_messages (
         channel_id TEXT,
         timestamp INT,
         author TEXT,
         text TEXT,
-        PRIMARY KEY (channel_id, author, timestamp,  text)
+        PRIMARY KEY (channel_id, author, timestamp)
     );
     """
     session.execute(create_tables_query)
@@ -58,7 +47,7 @@ def setup():
         timestamp INT,
         author TEXT,
         text TEXT,
-        PRIMARY KEY (channel_id, timestamp, author, text)
+        PRIMARY KEY (channel_id, timestamp, author)
     );
     """
     session.execute(create_tables_query)
@@ -77,24 +66,26 @@ def register_channel():
     owner = data['owner']
     topic = data.get('topic', None)  # Default to None if topic is not provided
 
-    # Check if the channel already exists
-    check_query = SimpleStatement("SELECT id FROM channels WHERE id = %s")
-    result = session.execute(check_query, (channel_id,))
-    
-    if result.one():
-        return jsonify({"message": "Channel with such id already exists."}), 400
-
     # Insert the new channel into Cassandra
     insert_query = SimpleStatement("""
         INSERT INTO channels (id, owner, topic)
         VALUES (%s, %s, %s)
+        IF NOT EXISTS
     """)
     session.execute(insert_query, (channel_id, owner, topic))
+
+    # Check if the channel was created
+    check_query = SimpleStatement("SELECT id FROM channels WHERE id = %s")
+    result = session.execute(check_query, (channel_id,))
+
+    if not result.one():
+        return jsonify({"message": "Channel already exists."}), 400
     
     # Optionally add the owner as a member to the channel
     insert_member_query = SimpleStatement("""
         INSERT INTO channel_members (id, member)
         VALUES (%s, %s)
+        IF NOT EXISTS
     """)
     session.execute(insert_member_query, (channel_id, owner))
     
@@ -219,19 +210,16 @@ def add_member(channel_id):
     if not channel_result.one():
         return jsonify({"message": "Channel not found."}), 400
     
-    # Check if the member already exists in the channel
-    check_member_query = SimpleStatement("SELECT member FROM channel_members WHERE id = %s AND member = %s")
-    member_result = session.execute(check_member_query, (channel_id, member))
-    
-    if member_result.one():
-        return jsonify({"message": "Member already exists in the channel."}), 400
-    
     # Insert the new member into the channel_members table
     insert_query = SimpleStatement("""
         INSERT INTO channel_members (id, member)
         VALUES (%s, %s)
+        IF NOT EXISTS
     """)
-    session.execute(insert_query, (channel_id, member))
+    result = session.execute(insert_query, (channel_id, member))
+    
+    if not result.one():
+        return jsonify({"message": "Member already exists in the channel."}),
     
     return jsonify({"message": "Member added."}), 201
 
