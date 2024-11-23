@@ -91,6 +91,11 @@ def register_airport(city):
         if not city_data:
             return jsonify({"error": "Airport could not be created due to missing data or city the airport is registered in is not registered in the system."}), 400
         
+        result = session.run("MATCH (a:Airport {code: $code}) RETURN a", code=code)
+        airport_data = result.single()
+        if airport_data:
+            return jsonify({"error": "Airport already exists."}), 400
+
         result = session.run("MATCH (a:Airport {name: $name}) RETURN a", name=name)
         airport_data = result.single()
         if airport_data:
