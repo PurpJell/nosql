@@ -2,7 +2,7 @@ import requests
 import pytest
 
 HOST = "127.0.0.1"
-PORT = 8080
+PORT = 5001
 
 
 def test_cities():
@@ -91,10 +91,10 @@ def test_flights():
   register_airport("TLL", "Tallinn Airport", "Tallinn", 2, "Address 5")
 
   register_flight("FR123", "VNO", "KUN", 100, 60, "Ryanair")
-  register_flight("FR124", "KUN", "RIX", 200, 120, "Ryanair")
+  register_flight("FR124", "KUN", "TLL", 200, 120, "Ryanair")
   register_flight("FR125", "RIX", "VNO", 150, 90, "Ryanair")
   register_flight("FR126", "EYVK", "KUN", 50, 30, "Ryanair")
-  register_flight("FR127", "RIX", "TLL", 300, 120, "Ryanair")
+  register_flight("FR127", "KUN", "TLL", 300, 120, "Ryanair")
 
   flight = get_flight("FR123")
   assert flight["number"] == "FR123"
@@ -128,8 +128,8 @@ def test_flights():
   assert flights2_ordered[0]["fromAirport"] == "KUN"
   assert flights2_ordered[0]["toAirport"] == "TLL"
   assert flights2_ordered[0]["flights"] == ["FR124", "FR127"]
-  assert flights2_ordered[0]["price"] == 500
-  assert flights2_ordered[0]["flightTimeInMinutes"] == 240
+  assert flights2_ordered[0]["price"] == 200
+  assert flights2_ordered[0]["flightTimeInMinutes"] == 120
   
 
 def register_city(name, country):

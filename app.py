@@ -37,16 +37,23 @@ def register_city():
         result = session.run(query, name=name, country=country)
 
     # Return a success message
-    return jsonify({"message": "City registered successfully."}), 201
+    return jsonify({"message": "City registered successfully."}), 204
 
 
 @app.route('/cities', methods=['GET'])
 def get_cities():
-    # Define the Cypher query
-    query = "MATCH (c:City) RETURN c"
+
+    country = request.args.get('country')
+
+    if country:
+        query = "MATCH (c:City {country:$country}) RETURN c"
+        print(query)
+    else:
+        query = "MATCH (c:City) RETURN c"
+
     # Execute the query
     with driver.session() as session:
-        result = session.run(query)
+        result = session.run(query, country=country)
         # Extract the data from the result
         cities = [{'name': record['c']['name'], 'country': record['c']['country']} for record in result]
     # Return the cities data as JSON
@@ -86,7 +93,7 @@ def register_airport(city):
     
     # Check if the city exists
     with driver.session() as session:
-        result = session.run("MATCH (c:City {name: $city_name}) RETURN c", city_name=city)
+        result = session.run("MATCH (c:City {name: $city}) RETURN c", city=city)
         city_data = result.single()
         if not city_data:
             return jsonify({"error": "Airport could not be created due to missing data or city the airport is registered in is not registered in the system."}), 400
@@ -103,16 +110,16 @@ def register_airport(city):
         
     # Define the Cypher query
     query = """
-    MATCH (c:City {name: $city_name})
-    CREATE (a:Airport {code: $code, name: $name, numberOfTerminals: $numberOfTerminals, address: $address})-[:LOCATED_IN]->(c)
+    MATCH (c:City {name: $city})
+    CREATE (a:Airport {code: $code, name: $name, city:$city, numberOfTerminals: $numberOfTerminals, address: $address})-[:LOCATED_IN]->(c)
     RETURN a
     """
     # Execute the query
     with driver.session() as session:
-        result = session.run(query,  city_name=city, code=code, name=name, numberOfTerminals=number_of_terminals, address=address)
+        result = session.run(query, code=code, name=name, city=city, numberOfTerminals=number_of_terminals, address=address)
 
     # Return a success message
-    return jsonify({"message": "Airport created."}), 201
+    return jsonify({"message": "Airport created."}), 204
 
 
 @app.route('/cities/<city>/airports', methods=['GET'])
@@ -120,21 +127,21 @@ def get_airports(city):
 
     # Check if the city exists
     with driver.session() as session:
-        result = session.run("MATCH (c:City {name: $city_name}) RETURN c", city_name=city)
+        result = session.run("MATCH (c:City {name: $city}) RETURN c", city=city)
         city_data = result.single()
         if not city_data:
             return jsonify({"error": "City not found."}), 404
 
     # Define the Cypher query
     query = """
-    MATCH (c:City {name: $city_name})<-[:LOCATED_IN]-(a:Airport)
+    MATCH (c:City {name: $city})<-[:LOCATED_IN]-(a:Airport)
     RETURN a
     """
     # Execute the query
     with driver.session() as session:
-        result = session.run(query, city_name=city)
+        result = session.run(query, city=city)
         # Extract the data from the result
-        airports = [{'code': record['a']['code'], 'name': record['a']['name'], 'numberOfTerminals': record['a']['numberOfTerminals'], 'address': record['a']['address']} for record in result]
+        airports = [{'code': record['a']['code'], 'name': record['a']['name'], 'city':record['a']['city'], 'numberOfTerminals': record['a']['numberOfTerminals'], 'address': record['a']['address']} for record in result]
     # Return the airports data as JSON
     return jsonify(airports), 200
 
@@ -155,6 +162,7 @@ def get_airport(code):
             airport = {
                 'code': airport_data['a']['code'],
                 'name': airport_data['a']['name'],
+                'city': airport_data['a']['city'],
                 'numberOfTerminals': airport_data['a']['numberOfTerminals'],
                 'address': airport_data['a']['address']
             }
@@ -211,7 +219,7 @@ def register_flight():
                     operator=operator)
 
     # Return success response
-    return jsonify({"message": "Flight created."}), 201
+    return jsonify({"message": "Flight created."}), 204
 
 @app.route('/flights/<number>', methods=['GET'])
 def get_flight(number):
@@ -269,24 +277,30 @@ def search_flights(fromCity, toCity):
         f.price AS price,
         f.flightTimeInMinutes AS flightTime
     ORDER BY f.price
-    LIMIT 1
     """
     
     with driver.session() as session:
         result = session.run(query, fromCity=fromCity, toCity=toCity)
-        flight_data = result.single()
         
-        if flight_data:
-            response = {
-                "fromAirport": flight_data["fromAirport"],
-                "toAirport": flight_data["toAirport"],
-                "flightNumber": flight_data["flightNumber"],
-                "price": flight_data["price"],
-                "flightTime": flight_data["flightTime"]
-            }
-            return jsonify(response), 200
-        else:
-            return jsonify({"error": "No flights found."}), 404
+        flights_dict = {}
+        for record in result:
+            key = (record["fromAirport"], record["toAirport"])
+            if key not in flights_dict:
+                flights_dict[key] = {
+                    "fromAirport": record["fromAirport"],
+                    "toAirport": record["toAirport"],
+                    "flights": [],
+                    "price": record["price"],
+                    "flightTimeInMinutes": record["flightTime"]
+                }
+            flights_dict[key]["flights"].append(record["flightNumber"])
+
+        flights = list(flights_dict.values())
+
+    if flights:
+        return jsonify(flights), 200
+    else:
+        return jsonify({"error": "No flights found."}), 404
 
 
 @app.route('/cleanup', methods=['POST'])
