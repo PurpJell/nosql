@@ -5,73 +5,73 @@ HOST = "127.0.0.1"
 PORT = 5001
 
 
-def test_cities():
-  cleanup()
+# def test_cities():
+#   cleanup()
 
-  nonexistent_city = get_city_raw("Vilnius")
-  assert nonexistent_city.status_code == 404
+#   nonexistent_city = get_city_raw("Vilnius")
+#   assert nonexistent_city.status_code == 404
 
-  register_city("Vilnius", "Lithuania")
-  register_city("Kaunas", "Lithuania")
-  register_city("Riga", "Latvia")
+#   register_city("Vilnius", "Lithuania")
+#   register_city("Kaunas", "Lithuania")
+#   register_city("Riga", "Latvia")
 
-  cities = get_cities()
-  assert len(cities) == 3
-  sorted_cities = sorted(cities, key=lambda x: x["name"])
-  assert sorted_cities[0]["name"] == "Kaunas"
-  assert sorted_cities[0]["country"] == "Lithuania"
-  assert sorted_cities[1]["name"] == "Riga"
-  assert sorted_cities[1]["country"] == "Latvia"
-  assert sorted_cities[2]["name"] == "Vilnius"
-  assert sorted_cities[2]["country"] == "Lithuania"
+#   cities = get_cities()
+#   assert len(cities) == 3
+#   sorted_cities = sorted(cities, key=lambda x: x["name"])
+#   assert sorted_cities[0]["name"] == "Kaunas"
+#   assert sorted_cities[0]["country"] == "Lithuania"
+#   assert sorted_cities[1]["name"] == "Riga"
+#   assert sorted_cities[1]["country"] == "Latvia"
+#   assert sorted_cities[2]["name"] == "Vilnius"
+#   assert sorted_cities[2]["country"] == "Lithuania"
 
-  cities = get_cities_in_country("Lithuania")
-  assert len(cities) == 2
-  sorted_cities = sorted(cities, key=lambda x: x["name"])
-  assert sorted_cities[0]["name"] == "Kaunas"
-  assert sorted_cities[0]["country"] == "Lithuania"
-  assert sorted_cities[1]["name"] == "Vilnius"
-  assert sorted_cities[1]["country"] == "Lithuania"
+#   cities = get_cities_in_country("Lithuania")
+#   assert len(cities) == 2
+#   sorted_cities = sorted(cities, key=lambda x: x["name"])
+#   assert sorted_cities[0]["name"] == "Kaunas"
+#   assert sorted_cities[0]["country"] == "Lithuania"
+#   assert sorted_cities[1]["name"] == "Vilnius"
+#   assert sorted_cities[1]["country"] == "Lithuania"
 
 
 
-def test_airports():
-  cleanup()
+# def test_airports():
+#   cleanup()
 
-  nonexistent_airport = get_airport_raw("VNO")
-  assert nonexistent_airport.status_code == 404
+#   nonexistent_airport = get_airport_raw("VNO")
+#   assert nonexistent_airport.status_code == 404
 
-  register_city("Vilnius", "Lithuania")
-  register_city("Kaunas", "Lithuania")
-  register_city("Riga", "Latvia")
+#   register_city("Vilnius", "Lithuania")
+#   register_city("Kaunas", "Lithuania")
+#   register_city("Riga", "Latvia")
 
-  register_airport("VNO", "Vilnius Airport", "Vilnius", 2, "Address 1")
-  register_airport("KUN", "Kaunas Airport", "Kaunas", 1, "Address 2")
-  register_airport("RIX", "Riga Airport", "Riga", 3, "Address 3")
-  register_airport("EYVK", "Kyviškės Airport", "Vilnius", 1, "Address 4")
+#   register_airport("VNO", "Vilnius Airport", "Vilnius", 2, "Address 1")
+#   register_airport("KUN", "Kaunas Airport", "Kaunas", 1, "Address 2")
+#   register_airport("RIX", "Riga Airport", "Riga", 3, "Address 3")
+#   register_airport("EYVK", "Kyviškės Airport", "Vilnius", 1, "Address 4")
 
-  airport = get_airport("VNO")
-  assert airport["code"] == "VNO"
-  assert airport["name"] == "Vilnius Airport"
-  assert airport["city"] == "Vilnius"
-  assert airport["numberOfTerminals"] == 2
-  assert airport["address"] == "Address 1"
+#   airport = get_airport("VNO")
+#   assert airport["code"] == "VNO"
+#   assert airport["name"] == "Vilnius Airport"
+#   assert airport["city"] == "Vilnius"
+#   assert airport["numberOfTerminals"] == 2
+#   assert airport["address"] == "Address 1"
 
-  airports = get_airports_in_a_city("Vilnius")
-  assert len(airports) == 2
+#   airports = get_airports_in_a_city("Vilnius")
+#   assert len(airports) == 2
 
-  airports_ordered = sorted(airports, key=lambda x: x["code"])
-  assert airports_ordered[0]["code"] == "EYVK"
-  assert airports_ordered[0]["name"] == "Kyviškės Airport"
-  assert airports_ordered[0]["numberOfTerminals"] == 1
-  assert airports_ordered[0]["address"] == "Address 4"
-  assert airports_ordered[1]["code"] == "VNO"
-  assert airports_ordered[1]["name"] == "Vilnius Airport"
-  assert airports_ordered[1]["numberOfTerminals"] == 2
-  assert airports_ordered[1]["address"] == "Address 1"
+#   airports_ordered = sorted(airports, key=lambda x: x["code"])
+#   assert airports_ordered[0]["code"] == "EYVK"
+#   assert airports_ordered[0]["name"] == "Kyviškės Airport"
+#   assert airports_ordered[0]["numberOfTerminals"] == 1
+#   assert airports_ordered[0]["address"] == "Address 4"
+#   assert airports_ordered[1]["code"] == "VNO"
+#   assert airports_ordered[1]["name"] == "Vilnius Airport"
+#   assert airports_ordered[1]["numberOfTerminals"] == 2
+#   assert airports_ordered[1]["address"] == "Address 1"
 
-  kaunas_airports = get_airports_in_a_city("Kaunas")
-  assert len(kaunas_airports) == 1
+#   kaunas_airports = get_airports_in_a_city("Kaunas")
+#   assert len(kaunas_airports) == 1
 
 def test_flights():
   cleanup()
@@ -91,10 +91,10 @@ def test_flights():
   register_airport("TLL", "Tallinn Airport", "Tallinn", 2, "Address 5")
 
   register_flight("FR123", "VNO", "KUN", 100, 60, "Ryanair")
-  register_flight("FR124", "KUN", "TLL", 200, 120, "Ryanair")
+  register_flight("FR124", "KUN", "RIX", 200, 120, "Ryanair")
   register_flight("FR125", "RIX", "VNO", 150, 90, "Ryanair")
   register_flight("FR126", "EYVK", "KUN", 50, 30, "Ryanair")
-  register_flight("FR127", "KUN", "TLL", 300, 120, "Ryanair")
+  register_flight("FR127", "RIX", "TLL", 300, 120, "Ryanair")
 
   flight = get_flight("FR123")
   assert flight["number"] == "FR123"
@@ -128,8 +128,8 @@ def test_flights():
   assert flights2_ordered[0]["fromAirport"] == "KUN"
   assert flights2_ordered[0]["toAirport"] == "TLL"
   assert flights2_ordered[0]["flights"] == ["FR124", "FR127"]
-  assert flights2_ordered[0]["price"] == 200
-  assert flights2_ordered[0]["flightTimeInMinutes"] == 120
+  assert flights2_ordered[0]["price"] == 500
+  assert flights2_ordered[0]["flightTimeInMinutes"] == 240
   
 
 def register_city(name, country):

@@ -223,12 +223,6 @@ def register_flight():
 
 @app.route('/flights/<number>', methods=['GET'])
 def get_flight(number):
-    """
-    Get full flight information by flight number.
-    Returns:
-        200: Flight information in JSON format.
-        404: If the flight is not found.
-    """
     # Define the Cypher query
     query = """
     MATCH (f:Flight {number: $number})-[:DEPARTS_FROM]->(fromAirport:Airport)-[:LOCATED_IN]->(fromCity:City),
@@ -266,36 +260,39 @@ def get_flight(number):
         
         return jsonify(flight), 200
 
+
 @app.route('/search/flights/<fromCity>/<toCity>', methods=['GET'])
 def search_flights(fromCity, toCity):
     query = """
-    MATCH (from:City {name: $fromCity})<-[:LOCATED_IN]-(fromAirport:Airport)<-[:DEPARTS_FROM]-(f:Flight)-[:ARRIVES_AT]->(toAirport:Airport)-[:LOCATED_IN]->(to:City {name: $toCity})
+    MATCH path = (from:City {name: $fromCity})<-[:LOCATED_IN]-(fromAirport:Airport)<-[:DEPARTS_FROM]-(f1:Flight)-[:ARRIVES_AT]->(a1:Airport)<-[:DEPARTS_FROM*0..2]-(f2:Flight)-[:ARRIVES_AT*0..2]->(a2:Airport)-[:LOCATED_IN]->(to:City {name: $toCity})
+    WITH path, [n IN nodes(path) WHERE n:Flight | n.number] AS flightNumbers,
+         [n IN nodes(path) WHERE n:Flight | n.price] AS prices,
+         [n IN nodes(path) WHERE n:Flight | n.flightTimeInMinutes] AS flightTimes,
+         [n IN nodes(path) WHERE n:Airport | n.code] AS airports
     RETURN 
-        fromAirport.code AS fromAirport,
-        toAirport.code AS toAirport,
-        f.number AS flightNumber,
-        f.price AS price,
-        f.flightTimeInMinutes AS flightTime
-    ORDER BY f.price
+        airports[0] AS fromAirport,
+        airports[-1] AS toAirport,
+        flightNumbers AS flights,
+        reduce(totalPrice = 0, price IN prices | totalPrice + price) AS price,
+        reduce(totalTime = 0, time IN flightTimes | totalTime + time) AS flightTime
+    ORDER BY price
     """
+
     
     with driver.session() as session:
         result = session.run(query, fromCity=fromCity, toCity=toCity)
         
-        flights_dict = {}
+        print(result[0]["fromAirport"])
+        flights = []
         for record in result:
-            key = (record["fromAirport"], record["toAirport"])
-            if key not in flights_dict:
-                flights_dict[key] = {
-                    "fromAirport": record["fromAirport"],
-                    "toAirport": record["toAirport"],
-                    "flights": [],
-                    "price": record["price"],
-                    "flightTimeInMinutes": record["flightTime"]
-                }
-            flights_dict[key]["flights"].append(record["flightNumber"])
-
-        flights = list(flights_dict.values())
+            flight = {
+                "fromAirport": record["fromAirport"],
+                "toAirport": record["toAirport"],
+                "flights": record["flights"],
+                "price": record["price"],
+                "flightTimeInMinutes": record["flightTime"]
+            }
+            flights.append(flight)
 
     if flights:
         return jsonify(flights), 200
