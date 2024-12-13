@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from mongoengine import connect
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'portalas',
+    'django_mongoengine',
+    'django_mongoengine.mongo_admin',
+
 ]
 
 MIDDLEWARE = [
@@ -76,15 +80,21 @@ WSGI_APPLICATION = 'ndb.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
+        'ENGINE': 'django.db.backends.dummy',
         'NAME': 'skelbimu_portalas',
-        'ENFORCE_SCHEMA': False,
-        'CLIENT': {
-            'host': 'localhost',
-            'port': 27017,
-        }
     }
 }
+
+MONGODB_DATABASES = {
+    'default': {
+        'name': 'skelbimu_portalas',
+        'host': 'localhost',
+        'port': 27017
+    }
+}
+
+
+connect('skelbimu_portalas', host='localhost', port=27017)
 
 
 # Password validation
