@@ -13,4 +13,8 @@
         {{ form.as_p }}
         <button type="submit">Išsaugoti</button>
     </form>
+    <form action="{% url 'skelbimu_kategorijos_view' %}" method="get" style="display:inline;">
+        <input type="hidden" name="parent" value="{{ parent.id }}">
+        <button type="submit">Atšaukti</button>
+    </form>
 </html>

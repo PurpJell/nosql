@@ -9,6 +9,7 @@ from bson import ObjectId
 from mongoengine.errors import DoesNotExist
 from datetime import datetime
 import pytz
+from django.core.paginator import Paginator
 
 @require_http_methods(["GET"])
 def index_view(request):
@@ -208,14 +209,13 @@ def skelbimai_view(request):
             skelbimai = Skelbimas.objects.filter(busena='aktyvus')
             skelbimai = skelbimai.filter(galiojimo_laikas__gte=datetime.now(pytz.timezone('Europe/Vilnius')))
 
-        form = SkelbimuFiltrasForm(initial = {
-            'kategorija': request.GET.get('kategorija'),
-            'atnaujinimo_data_nuo': request.GET.get('atnaujinimo_data'),
-            'kurejas': request.GET.get('kurejas'),
-            'kaina_nuo': request.GET.get('kaina_min'),
-            'kaina_iki': request.GET.get('kaina_max'),
-        })
-        return render(request, 'skelbimai.html', {'form': form, 'skelbimai': skelbimai, 'kategorija': kategorija})
+        # Paginate the skelbimai
+        paginator = Paginator(skelbimai, 5)  # 5 skelbimai per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        form = SkelbimuFiltrasForm()
+        return render(request, 'skelbimai.html', {'form': form, 'skelbimai': skelbimai, 'page_obj': page_obj, 'kategorija': kategorija})
 
     elif request.method == "POST":
 
@@ -255,6 +255,7 @@ def skelbimai_view(request):
             query['galiojimo_laikas__gte'] = datetime.now(pytz.timezone('Europe/Vilnius'))
             
             skelbimai = Skelbimas.objects.filter(**query)
+
             return skelbimai
         
         form = SkelbimuFiltrasForm(request.POST)
@@ -264,12 +265,17 @@ def skelbimai_view(request):
         
             skelbimai = get_filtered_skelbimai(query_params)
 
+            # Paginate the skelbimai
+            paginator = Paginator(skelbimai, 5)  # 5 skelbimai per page
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+
             if query_params.get('kategorija'):
                 kategorija = Skelbimu_kategorija.objects.get(id=query_params.get('kategorija'))
             else:
                 kategorija = None
 
-            return render(request, 'skelbimai.html', {'form': form, 'skelbimai': skelbimai, 'kategorija': kategorija})
+            return render(request, 'skelbimai.html', {'form': form, 'skelbimai': skelbimai, "page_obj": page_obj, 'kategorija': kategorija})
         else:
             return render(request, 'skelbimai.html', {'form': form})
     
@@ -338,9 +344,12 @@ def update_skelbimas_view(request):
 @require_http_methods(["GET"])
 def konkretus_skelbimas_view(request):
     # skelbimai/skelbimas/?skelbimas=x
-    skelbimas = Skelbimas.objects.get(id=request.GET.get('skelbimas'))
-    lankytojas = Vartotojas.objects.get(django_user_id=str(request.user.id))
-    return render(request, 'konkretus_skelbimas.html', {'skelbimas': skelbimas, 'lankytojas': lankytojas})
+    if request.GET.get('skelbimas') and request.GET.get('skelbimas') != 'None' and request.GET.get('skelbimas') != '':
+        skelbimas = Skelbimas.objects.get(id=request.GET.get('skelbimas'))
+        lankytojas = Vartotojas.objects.get(django_user_id=str(request.user.id))
+        return render(request, 'konkretus_skelbimas.html', {'skelbimas': skelbimas, 'lankytojas': lankytojas})
+    else:
+        return HttpResponseRedirect(reverse('skelbimai_view'))
 
 
 @require_http_methods(["GET"])

@@ -11,10 +11,17 @@
         <h1>Mano pardavimai</h1>
         {% endif %}
         
-        <p><a href="{% url 'profile_view' %}">Atgal į profilį</a></p>
+        <form action="{% url 'profile_view' %}" method="get" style="display:inline;">
+            <button type="submit">Atgal į profilį</button>
+        </form>
+        
         {% if transakcija == 'pardavimai' %}
-        <p><a href="{% url 'update_skelbimas_view' %}?kategorija={{ kategorija.id }}">Sukurti skelbimą</a></p>
+        <form action="{% url 'update_skelbimas_view' %}" method="get" style="display:inline;">
+            <input type="hidden" name="kategorija" value="{{ kategorija.id }}">
+            <button type="submit">Sukurti skelbimą</button>
+        </form>
         {% endif %}
+        
         <ul>
             {% for skelbimas in skelbimai %}
             <li>
