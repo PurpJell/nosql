@@ -1,7 +1,9 @@
 from django import forms
-from .models import Vartotojas
+from .models import Vartotojas, Skelbimas, Skelbimu_kategorija, Paveikslelis
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
+from datetime import datetime
+import pytz
 
 
 class RegisterForm(forms.Form):
@@ -102,3 +104,74 @@ class UpdateProfileForm(forms.Form):
         user.save()
         vartotojas.save()
         return vartotojas
+    
+
+class SkelbimuKategorijaForm(forms.Form):
+    pavadinimas = forms.CharField(max_length=100, required=True, label='Pavadinimas')
+    lapas = forms.BooleanField(required=False, label='Lapas')
+    
+    def save(self, kurejas, kategorijos_id=None, motinine_kategorija=None):
+
+        if kategorijos_id:
+            kategorija = Skelbimu_kategorija.objects.get(id=kategorijos_id)
+            if self.cleaned_data['pavadinimas']:
+                kategorija.pavadinimas = self.cleaned_data['pavadinimas']
+            kategorija.lapas = self.cleaned_data.get('lapas', False)
+            kategorija.sukurimo_data = datetime.now(pytz.timezone('Europe/Vilnius'))
+            kategorija.kurejas = kurejas
+            kategorija.motinine_kategorija = motinine_kategorija
+            kategorija.save()
+            return kategorija
+        else:
+            kategorija = Skelbimu_kategorija(
+                pavadinimas=self.cleaned_data['pavadinimas'],
+                motinine_kategorija=motinine_kategorija,
+                kurejas=kurejas,
+                lapas=self.cleaned_data.get('lapas', False),
+            )
+            kategorija.save()
+            return kategorija
+    
+    
+
+class SkelbimasForm(forms.Form):
+    pavadinimas = forms.CharField(max_length=100, required=True, label='Pavadinimas')
+    aprasymas = forms.CharField(max_length=2000, required=True, label='Aprasymas')
+    kaina = forms.DecimalField(min_value=0, required=True, label='Kaina')
+    paveiksleliai = forms.FileField(required=False, label='Paveiksleliai')
+    kategorija = forms.ChoiceField(choices=[], required=True, label='Kategorija')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['kategorija'].choices = [(str(kategorija.id), kategorija.pavadinimas) for kategorija in Skelbimu_kategorija.objects.all()]
+    
+    def save(self, kurejas, skelbimo_id=None):
+        data = self.cleaned_data
+        paveiksleliai = data.get('paveiksleliai')
+        kategorija = Skelbimu_kategorija.objects.get(id=data['kategorija'])
+
+        if skelbimo_id:
+            skelbimas = Skelbimas.objects.get(id=skelbimo_id)
+            skelbimas.pavadinimas = data['pavadinimas']
+            skelbimas.aprasymas = data['aprasymas']
+            skelbimas.kaina = data['kaina']
+            skelbimas.kategorija = kategorija
+            skelbimas.atnaujinimo_data = datetime.now(pytz.timezone('Europe/Vilnius'))
+        else:
+            skelbimas = Skelbimas(
+                pavadinimas=data['pavadinimas'],
+                aprasymas=data['aprasymas'],
+                kaina=data['kaina'],
+                kategorija=kategorija,
+                kurejas=kurejas
+            )
+        skelbimas.save()
+        
+        if paveiksleliai:
+            for paveikslelis in paveiksleliai:
+                paveikslelis_obj = Paveikslelis(paveikslelis=paveikslelis)
+                paveikslelis_obj.save()
+                skelbimas.paveiksleliai.append(paveikslelis_obj)
+        
+        skelbimas.save()
+        return skelbimas

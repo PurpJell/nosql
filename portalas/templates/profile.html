@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile</title>
+    <script>
+        function deleteProfile() {
+            if (confirm('Ar tikrai norite ištrinti savo profilį?')) {
+                fetch("{% url 'profile_view' %}", {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = "{% url 'index_view' %}";
+                    } else {
+                        alert('Klaida ištrinant profilį.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Klaida ištrinant profilį.');
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Profile</h1>
+    <p>{{ vartotojas.vartotojo_vardas }}</p>
+
+    <button onclick="deleteProfile()">Ištrinti profilį</button>
+</body>
+</html>

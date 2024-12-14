@@ -1,5 +1,5 @@
-from mongoengine import Document, StringField, DecimalField, DateTimeField, ReferenceField, ListField, FileField, EmailField
-from datetime import datetime
+from mongoengine import Document, StringField, DecimalField, DateTimeField, ReferenceField, ListField, FileField, EmailField, BooleanField
+from datetime import datetime, timedelta
 import pytz
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.models import User
@@ -46,7 +46,7 @@ class Skelbimas(Document):
     kaina = DecimalField(min_value=0, precision=2, required=True, index=True)
     paveiksleliai = ListField(ReferenceField(Paveikslelis))
     kategorija = ReferenceField('Skelbimu_kategorija', required=True, index=True)
-    galiojimo_laikas = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')), index=True)
+    galiojimo_laikas = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')) + timedelta(days=30), index=True)
     busena = StringField(max_length=100, default='aktyvus', index=True)
     klientas = ReferenceField(Vartotojas, default=None, index=True)
     sukurimo_data = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')), index=True)
@@ -67,6 +67,7 @@ class Skelbimu_kategorija(Document):
     aprasymas = StringField(max_length=2000)
     sukurimo_data = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')), index=True)
     motinine_kategorija = ReferenceField('self', default=None)
+    lapas =  BooleanField(default=False)
 
     meta = {
         'collection': 'skelbimu_kategorijos'

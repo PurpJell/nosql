@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Valdyti skelbimų kategorijas</title>
+</head>
+<body>
+    <h1>Valdyti skelbimų kategorijas</h1>
+    <p>Kategorija: {{ parent.pavadinimas }}/{{ kategorija.pavadinimas }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="kategorija" value="{{ kategorija.id }}">
+        <input type="hidden" name="parent" value="{{ parent.id }}">
+        {{ form.as_p }}
+        <button type="submit">Išsaugoti</button>
+    </form>
+</html>

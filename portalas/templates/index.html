@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+{% csrf_token %}
+{% if user.is_authenticated %}
+    <p>Hello, {{ user.username }}!</p>
+    <a href="{% url 'logout_view' %}">Logout</a>
+
+    <a href="{% url 'skelbimai_view' %}">Skelbimai</a>
+
+    <a href="{% url 'skelbimu_kategorijos_view' %}">Kategorijos</a>
+
+{% else %}
+    <p>Hello, Anonymous!</p>
+    <a href="{% url 'login_view' %}">Login</a>
+{% endif%}
+<p>index</p>

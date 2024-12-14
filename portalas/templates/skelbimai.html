@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skelbimai</title>
+</head>
+<body>
+    <h1>Skelbimai</h1>
+    <p>Kategorija: {{ kategorija.pavadinimas }}</p>
+    <p><a href="{% url 'skelbimu_kategorijos_view' %}?parent={{ kategorija.id }}">Atgal į kategorijas</a></p>
+    {% if user.is_authenticated %}
+    <p><a href="{% url 'update_skelbimas_view' %}?kategorija={{ kategorija.id }}">Sukurti skelbimą</a></p>
+    {% endif %}
+    <ul>
+        {% for skelbimas in skelbimai %}
+            <li>
+                <a href="{% url 'konkretus_skelbimas_view' %}?skelbimas={{ skelbimas.id }}">{{ skelbimas.pavadinimas }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
