@@ -31,6 +31,17 @@
     <h1>Profile</h1>
     <p>{{ vartotojas.vartotojo_vardas }}</p>
 
+    <form action="{% url 'vartotojo_skelbimai_view' %}" method="get" style="display:inline;">
+        <input type="hidden" name="transakcija" value="pardavimai">
+        <button type="submit">Mano pardavimai</button>
+    </form>
+    <form action="{% url 'vartotojo_skelbimai_view' %}" method="get" style="display:inline;">
+        <input type="hidden" name="transakcija" value="pirkimai">
+        <button type="submit">Mano pirkimai</button>
+    </form>
+    <form action="{% url 'update_profile_view' %}" method="get" style="display:inline;">
+        <button type="submit">Redaguoti profilį</button>
+
     <button onclick="deleteProfile()">Ištrinti profilį</button>
 </body>
 </html>

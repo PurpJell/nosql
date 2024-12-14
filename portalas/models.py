@@ -31,6 +31,7 @@ class Vartotojas(Document):
 
 class Paveikslelis(Document):
     paveikslelis = FileField()
+    skelbimas = ReferenceField('Skelbimas', required=True, index=True)
 
     meta = {
         'collection': 'paveiksleliai'
@@ -44,9 +45,8 @@ class Skelbimas(Document):
     pavadinimas = StringField(max_length=100, required=True, index=True)
     aprasymas = StringField(max_lengt=2000, required=True)
     kaina = DecimalField(min_value=0, precision=2, required=True, index=True)
-    paveiksleliai = ListField(ReferenceField(Paveikslelis))
     kategorija = ReferenceField('Skelbimu_kategorija', required=True, index=True)
-    galiojimo_laikas = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')) + timedelta(days=30), index=True)
+    galiojimo_laikas = DateTimeField(required=True, index=True)
     busena = StringField(max_length=100, default='aktyvus', index=True)
     klientas = ReferenceField(Vartotojas, default=None, index=True)
     sukurimo_data = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')), index=True)

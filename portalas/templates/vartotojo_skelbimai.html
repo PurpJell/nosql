@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mano skelbimai</title>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        {% if transakcija == 'pirkimai' %}
+        <h1>Mano pirkimai</h1>
+        {% else %}
+        <h1>Mano pardavimai</h1>
+        {% endif %}
+        
+        <p><a href="{% url 'profile_view' %}">Atgal į profilį</a></p>
+        {% if transakcija == 'pardavimai' %}
+        <p><a href="{% url 'update_skelbimas_view' %}?kategorija={{ kategorija.id }}">Sukurti skelbimą</a></p>
+        {% endif %}
+        <ul>
+            {% for skelbimas in skelbimai %}
+            <li>
+                <a href="{% url 'konkretus_skelbimas_view' %}?skelbimas={{ skelbimas.id }}">{{ skelbimas.pavadinimas }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

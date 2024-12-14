@@ -4,11 +4,24 @@
     <title>Skelbimai</title>
 </head>
 <body>
-    <h1>Skelbimai</h1>
+    <h1>Filtrai</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Filtruoti</button>
+    </form>
+    <h2>Skelbimai</h2>
+    {% if kategorija is not None %}
     <p>Kategorija: {{ kategorija.pavadinimas }}</p>
-    <p><a href="{% url 'skelbimu_kategorijos_view' %}?parent={{ kategorija.id }}">Atgal į kategorijas</a></p>
+    {% endif %}
+    <form action="{% url 'skelbimu_kategorijos_view' %}" method="get" style="display:inline;">
+        <button type="submit">Naršyti kategorijas</button>
+    </form>
     {% if user.is_authenticated %}
-    <p><a href="{% url 'update_skelbimas_view' %}?kategorija={{ kategorija.id }}">Sukurti skelbimą</a></p>
+    <form action="{% url 'update_skelbimas_view' %}" method="get" style="display:inline;">
+        <input type="hidden" name="kategorija" value="{{ kategorija.id }}">
+        <button type="submit">Sukurti skelbimą</button>
+    </form>
     {% endif %}
     <ul>
         {% for skelbimas in skelbimai %}

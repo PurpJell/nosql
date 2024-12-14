@@ -67,39 +67,33 @@ class LoginForm(forms.Form):
     
 
 class UpdateProfileForm(forms.Form):
-    vartotojo_vardas = forms.CharField(max_length=100, required=False, label='Vartotojo Vardas')
-    vardas = forms.CharField(max_length=100, required=False, label='Vardas')
-    pavarde = forms.CharField(max_length=100, required=False, label='Pavarde')
-    slaptazodis = forms.CharField(widget=forms.PasswordInput(), required=False, label='Naujas Slaptazodis')
-    el_pastas = forms.EmailField(required=False, label='El. Pastas')
-    telefono_numeris = forms.CharField(max_length=15, required=False, label='Telefono Numeris')
+    vartotojo_vardas = forms.CharField(max_length=100, required=True, label='Vartotojo Vardas')
+    vardas = forms.CharField(max_length=100, required=True, label='Vardas')
+    pavarde = forms.CharField(max_length=100, required=True, label='Pavardė')
+    slaptazodis = forms.CharField(widget=forms.PasswordInput(), required=True, label='Naujas Slaptažodis')
+    el_pastas = forms.EmailField(required=True, label='El. Paštas')
+    telefono_numeris = forms.CharField(max_length=15, required=True, label='Telefono Numeris')
 
     def save(self, vartotojas):
         data = self.cleaned_data
         user = User.objects.get(id=vartotojas.django_user_id)
 
-        if data.get('vartotojo_vardas'):
-            user.username = data['vartotojo_vardas']
-            vartotojas.vartotojo_vardas = data['vartotojo_vardas']
+        user.username = data['vartotojo_vardas']
+        vartotojas.vartotojo_vardas = data['vartotojo_vardas']
 
-        if data.get('el_pastas'):
-            user.email = data['el_pastas']
-            vartotojas.el_pastas = data['el_pastas']
+        user.email = data['el_pastas']
+        vartotojas.el_pastas = data['el_pastas']
 
-        if data.get('vardas'):
-            user.first_name = data['vardas']
-            vartotojas.vardas = data['vardas']
+        user.first_name = data['vardas']
+        vartotojas.vardas = data['vardas']
 
-        if data.get('pavarde'):
-            user.last_name = data['pavarde']
-            vartotojas.pavarde = data['pavarde']
+        user.last_name = data['pavarde']
+        vartotojas.pavarde = data['pavarde']
 
-        if data.get('slaptazodis'):
-            user.set_password(data['slaptazodis'])
-            vartotojas.slaptazodis = make_password(data['slaptazodis'])
+        user.set_password(data['slaptazodis'])
+        vartotojas.slaptazodis = make_password(data['slaptazodis'])
 
-        if data.get('telefono_numeris'):
-            vartotojas.telefono_numeris = data['telefono_numeris']
+        vartotojas.telefono_numeris = data['telefono_numeris']
 
         user.save()
         vartotojas.save()
@@ -108,26 +102,37 @@ class UpdateProfileForm(forms.Form):
 
 class SkelbimuKategorijaForm(forms.Form):
     pavadinimas = forms.CharField(max_length=100, required=True, label='Pavadinimas')
-    lapas = forms.BooleanField(required=False, label='Lapas')
-    
-    def save(self, kurejas, kategorijos_id=None, motinine_kategorija=None):
+    aprasymas = forms.CharField(max_length=2000, required=False, label='Aprašymas')
+    lapas = forms.ChoiceField(required=True, label='Lapas')
+    motinine_kategorija = forms.ChoiceField(choices=[], required=False, label='Motininė Kategorija')
 
-        if kategorijos_id:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['motinine_kategorija'].choices = [('', 'Pasirinkite Motininę Kategorija')] + [(str(kategorija.id), kategorija.pavadinimas) for kategorija in Skelbimu_kategorija.objects.filter(lapas=False)]
+        self.fields['lapas'].choices = [(True, 'Taip'), (False, 'Ne')]
+    
+    def save(self, kurejas, kategorijos_id=None):
+
+        motinine_kategorija_id = self.cleaned_data.get('motinine_kategorija')
+        motinine_kategorija = Skelbimu_kategorija.objects.get(id=motinine_kategorija_id) if motinine_kategorija_id else None
+        lapas = True if self.cleaned_data['lapas'] == 'True' else False
+
+        if kategorijos_id: # jei kategorija jau egzistuoja
             kategorija = Skelbimu_kategorija.objects.get(id=kategorijos_id)
-            if self.cleaned_data['pavadinimas']:
-                kategorija.pavadinimas = self.cleaned_data['pavadinimas']
-            kategorija.lapas = self.cleaned_data.get('lapas', False)
+            kategorija.pavadinimas = self.cleaned_data['pavadinimas']
+            kategorija.aprasymas = self.cleaned_data['aprasymas']
+            kategorija.lapas = lapas
             kategorija.sukurimo_data = datetime.now(pytz.timezone('Europe/Vilnius'))
             kategorija.kurejas = kurejas
             kategorija.motinine_kategorija = motinine_kategorija
             kategorija.save()
             return kategorija
-        else:
+        else: # jei kategorija neegzistuoja
             kategorija = Skelbimu_kategorija(
                 pavadinimas=self.cleaned_data['pavadinimas'],
                 motinine_kategorija=motinine_kategorija,
                 kurejas=kurejas,
-                lapas=self.cleaned_data.get('lapas', False),
+                lapas=lapas,
             )
             kategorija.save()
             return kategorija
@@ -136,18 +141,23 @@ class SkelbimuKategorijaForm(forms.Form):
 
 class SkelbimasForm(forms.Form):
     pavadinimas = forms.CharField(max_length=100, required=True, label='Pavadinimas')
-    aprasymas = forms.CharField(max_length=2000, required=True, label='Aprasymas')
+    aprasymas = forms.CharField(max_length=2000, required=True, label='Aprašymas')
     kaina = forms.DecimalField(min_value=0, required=True, label='Kaina')
-    paveiksleliai = forms.FileField(required=False, label='Paveiksleliai')
+    paveiksleliai = forms.FileField(required=True, label='Paveikslėliai', widget=forms.ClearableFileInput(attrs={'multiple': True}))
     kategorija = forms.ChoiceField(choices=[], required=True, label='Kategorija')
+    galiojimo_laikas = forms.DateTimeField(
+        required=True,
+        label='Galiojimo Laikas',
+        widget=forms.DateTimeInput(attrs={'placeholder': '2024-01-25 14:30'})
+    )
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['kategorija'].choices = [(str(kategorija.id), kategorija.pavadinimas) for kategorija in Skelbimu_kategorija.objects.all()]
+        self.fields['kategorija'].choices = [(str(kategorija.id), kategorija.pavadinimas) for kategorija in Skelbimu_kategorija.objects.filter(lapas=True)]
     
     def save(self, kurejas, skelbimo_id=None):
         data = self.cleaned_data
-        paveiksleliai = data.get('paveiksleliai')
+        paveiksleliai = self.files.getlist('paveiksleliai')
         kategorija = Skelbimu_kategorija.objects.get(id=data['kategorija'])
 
         if skelbimo_id:
@@ -157,21 +167,61 @@ class SkelbimasForm(forms.Form):
             skelbimas.kaina = data['kaina']
             skelbimas.kategorija = kategorija
             skelbimas.atnaujinimo_data = datetime.now(pytz.timezone('Europe/Vilnius'))
+            skelbimas.galiojimo_laikas = data['galiojimo_laikas']
         else:
             skelbimas = Skelbimas(
                 pavadinimas=data['pavadinimas'],
                 aprasymas=data['aprasymas'],
                 kaina=data['kaina'],
                 kategorija=kategorija,
-                kurejas=kurejas
+                kurejas=kurejas,
+                galiojimo_laikas=data['galiojimo_laikas']
             )
         skelbimas.save()
         
         if paveiksleliai:
+            print("There are images")
             for paveikslelis in paveiksleliai:
-                paveikslelis_obj = Paveikslelis(paveikslelis=paveikslelis)
+                paveikslelis_obj = Paveikslelis(paveikslelis=paveikslelis, skelbimas=skelbimas)
                 paveikslelis_obj.save()
                 skelbimas.paveiksleliai.append(paveikslelis_obj)
         
         skelbimas.save()
         return skelbimas
+    
+
+class SkelbimuFiltrasForm(forms.Form):
+    kategorija = forms.ChoiceField(choices=[], required=False, label='Kategorija')
+    atnaujinimo_data_nuo = forms.DateTimeField(required=False, label='Atnaujinimo Data Nuo')
+    kurejas = forms.CharField(max_length=100, required=False, label='Kurėjo vartotojo vardas')
+    pavadinimas = forms.CharField(max_length=100, required=False, label='Pavadinimas')
+    kaina_nuo = forms.DecimalField(min_value=0, required=False, label='Kaina Nuo')
+    kaina_iki = forms.DecimalField(min_value=0, required=False, label='Kaina Iki')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['kategorija'].choices = [('', 'Pasirinkite Kategorija')] + [(str(kategorija.id), kategorija.pavadinimas) for kategorija in Skelbimu_kategorija.objects.filter(lapas=True)]
+    
+    def get_query(self):
+        query = {}
+        data = self.cleaned_data
+        
+        if data.get('kategorija'):
+            query['kategorija'] = data['kategorija']
+
+        if data.get('atnaujinimo_data_nuo'):
+            query['atnaujinimo_data__gte'] = data['atnaujinimo_data_nuo']
+
+        if data.get('kurejas'):
+            query['kurejas'] = data['kurejas']
+        
+        if data.get('pavadinimas'):
+            query['pavadinimas__icontains'] = data['pavadinimas']
+        
+        if data.get('kaina_nuo'):
+            query['kaina__gte'] = data['kaina_nuo']
+        
+        if data.get('kaina_iki'):
+            query['kaina__lte'] = data['kaina_iki']
+        
+        return query
