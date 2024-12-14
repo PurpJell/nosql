@@ -143,7 +143,7 @@ class SkelbimasForm(forms.Form):
     pavadinimas = forms.CharField(max_length=100, required=True, label='Pavadinimas')
     aprasymas = forms.CharField(max_length=2000, required=True, label='Aprašymas')
     kaina = forms.DecimalField(min_value=0, required=True, label='Kaina')
-    paveiksleliai = forms.FileField(required=True, label='Paveikslėliai', widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    paveiksleliai = forms.FileField(required=False, label='Paveikslėliai', widget=forms.ClearableFileInput(attrs={'multiple': True}))
     kategorija = forms.ChoiceField(choices=[], required=True, label='Kategorija')
     galiojimo_laikas = forms.DateTimeField(
         required=True,

@@ -7,6 +7,8 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 from bson import ObjectId
 from mongoengine.errors import DoesNotExist
+from datetime import datetime
+import pytz
 
 @require_http_methods(["GET"])
 def index_view(request):
@@ -199,9 +201,12 @@ def skelbimai_view(request):
         if request.GET.get('kategorija'):
             kategorija = Skelbimu_kategorija.objects.get(id=request.GET.get('kategorija'))
             skelbimai = Skelbimas.objects.filter(kategorija=kategorija)
+            skelbimai = skelbimai.filter(busena='aktyvus')
+            skelbimai = skelbimai.filter(galiojimo_laikas__gte=datetime.now(pytz.timezone('Europe/Vilnius')))
         else:
             kategorija = None
-            skelbimai = Skelbimas.objects.all()
+            skelbimai = Skelbimas.objects.filter(busena='aktyvus')
+            skelbimai = skelbimai.filter(galiojimo_laikas__gte=datetime.now(pytz.timezone('Europe/Vilnius')))
 
         form = SkelbimuFiltrasForm(initial = {
             'kategorija': request.GET.get('kategorija'),
@@ -246,6 +251,8 @@ def skelbimai_view(request):
                 query['kaina__gte'] = kaina_min
             
             query['busena'] = 'aktyvus'
+
+            query['galiojimo_laikas__gte'] = datetime.now(pytz.timezone('Europe/Vilnius'))
             
             skelbimai = Skelbimas.objects.filter(**query)
             return skelbimai
