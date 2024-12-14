@@ -1,14 +1,16 @@
 from mongoengine import Document, StringField, DecimalField, DateTimeField, ReferenceField, ListField, FileField, EmailField
-from mongoengine.fields import ObjectIdField
 from datetime import datetime
-from bson import ObjectId
 import pytz
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.models import User
 
 
 class Vartotojas(Document):
+    django_user_id = StringField()
     vartotojo_vardas = StringField(max_length=100, unique=True, required=True)
     vardas = StringField(max_length=100, required=True)
     pavarde = StringField(max_length=100, required=True)
+    slaptazodis = StringField(max_length=100, required=True)
     el_pastas = EmailField(max_length=100, unique=True, required=True)
     telefono_numeris = StringField(max_length=15, unique=True, required=True)
     vaidmuo = StringField(max_length=50, required=True, index=True)
@@ -16,6 +18,12 @@ class Vartotojas(Document):
     meta = {
         'collection': 'vartotojai'
     }
+
+    def set_password(self, raw_password):
+        self.slaptazodis = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.slaptazodis)
 
     def __str__(self):
         return self.vartotojo_vardas
