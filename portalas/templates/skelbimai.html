@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skelbimai</title>
+</head>
+<body>
+    <h1>Filtrai</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Filtruoti</button>
+    </form>
+    <h2>Skelbimai</h2>
+    {% if kategorija is not None %}
+    <p>Kategorija: {{ kategorija.pavadinimas }}</p>
+    {% endif %}
+    <form action="{% url 'skelbimu_kategorijos_view' %}" method="get" style="display:inline;">
+        <button type="submit">Naršyti kategorijas</button>
+    </form>
+    {% if user.is_authenticated %}
+    <form action="{% url 'update_skelbimas_view' %}" method="get" style="display:inline;">
+        <input type="hidden" name="kategorija" value="{{ kategorija.id }}">
+        <button type="submit">Sukurti skelbimą</button>
+    </form>
+    {% endif %}
+    <ul>
+        {% for skelbimas in page_obj %}
+            <li>
+                <a href="{% url 'konkretus_skelbimas_view' %}?skelbimas={{ skelbimas.id }}">{{ skelbimas.pavadinimas }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Pagination controls -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <form action="" method="get" style="display:inline;">
+                    <input type="hidden" name="page" value="1">
+                    <button type="submit">&laquo; first</button>
+                </form>
+                <form action="" method="get" style="display:inline;">
+                    <input type="hidden" name="page" value="{{ page_obj.previous_page_number }}">
+                    <button type="submit">previous</button>
+                </form>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <form action="" method="get" style="display:inline;">
+                    <input type="hidden" name="page" value="{{ page_obj.next_page_number }}">
+                    <button type="submit">next</button>
+                </form>
+                <form action="" method="get" style="display:inline;">
+                    <input type="hidden" name="page" value="{{ page_obj.paginator.num_pages }}">
+                    <button type="submit">last &raquo;</button>
+                </form>
+            {% endif %}
+        </span>
+    </div>
+</body>
+</html>
