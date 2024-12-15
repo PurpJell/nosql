@@ -1,5 +1,7 @@
 from django.urls import path
 from .views import index_view, register_view, login_view, logout_view, profile_view, update_profile_view, skelbimai_view, skelbimu_kategorijos_view, update_kategorija_view, skelbimai_view, update_skelbimas_view, konkretus_skelbimas_view, skelbimo_busena_view, vartotojo_skelbimai_view
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', index_view, name='index_view'),
@@ -17,3 +19,6 @@ urlpatterns = [
     path('skelbimai/skelbimas/busena/', skelbimo_busena_view, name='skelbimo_busena_view'),
     path('user/skelbimai/', vartotojo_skelbimai_view, name='vartotojo_skelbimai_view'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
