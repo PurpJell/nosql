@@ -32,16 +32,6 @@
     <p>{{ skelbimas.pavadinimas }}</p>
     <p>{{ skelbimas.kaina }}</p>
     <p>{{ skelbimas.aprasymas }}</p>
-    <!-- <p>kurejas {{ skelbimas.kurejas.id }}</p>
-    <p>busena {{ skelbimas.busena }}</p>
-    <p>klientas {{ skelbimas.klientas.id }}</p>
-    <p>lankytojas {{lankytojas.id}}</p> -->
-
-    <!-- <div>
-        {% for paveikslelis in skelbimas.paveiksleliai %}
-            <img src="{{ paveikslelis.url }}" alt="Paveikslelis">
-        {% endfor %}
-    </div> -->
 
     {% if user.is_authenticated %}
         {% if lankytojas.id == skelbimas.kurejas.id %}
