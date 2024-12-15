@@ -47,7 +47,7 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                return render(request, 'index.html')
+                return HttpResponseRedirect(reverse('index_view'))
             else:
                 form.add_error(None, "Invalid username or password")
         return HttpResponseRedirect(reverse('login_view'))
@@ -182,14 +182,8 @@ def update_kategorija_view(request):
     elif request.method == "DELETE":
         kategorija = Skelbimu_kategorija.objects.get(id=request.GET.get('kategorija'))
         
-        def cascade_delete(kategorija):
-            for k in Skelbimu_kategorija.objects.filter(motinine_kategorija=kategorija):
-                cascade_delete(k)
-                # delete all posts in category
-                k.delete()
-            kategorija.delete()
+        kategorija.cascade_delete()
 
-        cascade_delete(kategorija)
         return render(request, 'skelbimu_kategorijos.html', {'parent': request.GET.get('parent')})
 
     
@@ -328,12 +322,8 @@ def update_skelbimas_view(request):
                 skelbimas = Skelbimas.objects.get(id=skelbimas_id)
                 kategorija = skelbimas.kategorija
 
-                def cascade_delete(skelbimas):
-                    for p in Paveikslelis.objects.filter(skelbimas=skelbimas):
-                        p.delete()
-                    skelbimas.delete()
-
-                cascade_delete(skelbimas)
+                skelbimas.cascade_delete()
+                
                 return JsonResponse({'success': True, 'redirect_url': reverse('skelbimai_view') + f'?kategorija={kategorija.id}'})
             except Skelbimas.DoesNotExist:
                 return JsonResponse({'success': False, 'error': 'Skelbimas not found'}, status=404)

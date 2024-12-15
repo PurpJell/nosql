@@ -57,6 +57,11 @@ class Skelbimas(Document):
         'collection': 'skelbimai'
     }
 
+    def cascade_delete(self):
+        for paveikslelis in Paveikslelis.objects(skelbimas=self):
+            paveikslelis.delete()
+        self.delete()
+
     def __str__(self):
         return self.pavadinimas
     
@@ -68,6 +73,13 @@ class Skelbimu_kategorija(Document):
     sukurimo_data = DateTimeField(default=lambda: datetime.now(pytz.timezone('Europe/Vilnius')), index=True)
     motinine_kategorija = ReferenceField('self', default=None)
     lapas =  BooleanField(default=False)
+
+    def cascade_delete(self):
+        for skelbimas in Skelbimas.objects(kategorija=self):
+            skelbimas.cascade_delete()
+        for subcategory in Skelbimu_kategorija.objects(motinine_kategorija=self):
+            subcategory.cascade_delete()
+        self.delete()
 
     meta = {
         'collection': 'skelbimu_kategorijos'
