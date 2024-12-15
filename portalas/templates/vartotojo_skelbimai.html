@@ -4,6 +4,9 @@
     <title>Mano skelbimai</title>
 </head>
 <body>
+    <header>
+        {% include 'navbar.html' %}
+    </header>
     {% if user.is_authenticated %}
         {% if transakcija == 'pirkimai' %}
         <h1>Mano pirkimai</h1>

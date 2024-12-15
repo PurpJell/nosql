@@ -4,6 +4,10 @@
     <title>Login</title>
 </head>
 <body>
+    <header>
+        {% include 'navbar.html' %}
+    </header>
+    
     <h1>Login</h1>
     <form method="post">
         {% csrf_token %}

@@ -1,0 +1,38 @@
+<nav class="navbar">
+    <div class="user-greeting">
+        {% if user.is_authenticated %}
+            <p>Hello, {{ user.username }}!</p>
+        {% else %}
+            <p>Hello, Anonymous!</p>
+        {% endif %}
+    </div>
+    <div class="navbar-links">
+        {% if user.is_authenticated %}
+            <form action="{% url 'index_view' %}" method="get">
+                <button class="btn index">Index</button>
+            </form>
+            <form action="{% url 'skelbimai_view' %}" method="get">
+                <button class="btn skelbimai">Skelbimai</button>
+            </form>
+            <form action="{% url 'skelbimu_kategorijos_view' %}" method="get">
+                <button class="btn kategorijos">Kategorijos</button>
+            </form>
+            <form action="{% url 'profile_view' %}" method="get">
+                <button class="btn profile">Mano profilis</button>
+            </form>
+            <form action="{% url 'logout_view' %}" method="get">
+                <button class="btn logout">Logout</button>
+            </form>
+        {% else %}
+            <form action="{% url 'index_view' %}" method="get">
+                <button class="btn index">Index</button>
+            </form>
+            <form action="{% url 'login_view' %}" method="get">
+                <button class="btn login">Login</button>
+            </form>
+            <form action="{% url 'register_view' %}" method="get">
+                <button class="btn register">Register</button>
+            </form>
+        {% endif %}
+    </div>
+</nav>
