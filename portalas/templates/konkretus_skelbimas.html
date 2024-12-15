@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ skelbimas.pavadinimas }}</title>
+    <script>
+        function deleteSkelbimas(skelbimasId) {
+            event.preventDefault();
+            if (confirm('Ar tikrai norite ištrinti šį skelbimą?')) {
+                fetch("{% url 'update_skelbimas_view' %}?skelbimas=" + encodeURIComponent(skelbimasId), {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = "{% url 'skelbimai_view' %}";
+                    } else {
+                        alert('Klaida ištrinant skelbimą.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Klaida ištrinant skelbimą.');
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    <p>{{ skelbimas.pavadinimas }}</p>
+    <p>{{ skelbimas.kaina }}</p>
+    <p>{{ skelbimas.aprasymas }}</p>
+    <!-- <p>kurejas {{ skelbimas.kurejas.id }}</p>
+    <p>busena {{ skelbimas.busena }}</p>
+    <p>klientas {{ skelbimas.klientas.id }}</p>
+    <p>lankytojas {{lankytojas.id}}</p> -->
+
+    <!-- <div>
+        {% for paveikslelis in skelbimas.paveiksleliai %}
+            <img src="{{ paveikslelis.url }}" alt="Paveikslelis">
+        {% endfor %}
+    </div> -->
+
+    {% if user.is_authenticated %}
+        {% if lankytojas.id == skelbimas.kurejas.id %}
+            {% if skelbimas.busena == 'aktyvus' or skelbimas.busena == 'negaliojantis' %}
+        <form action="{% url 'update_skelbimas_view' %}" method="get" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+            <button type="submit">Redaguoti</button>
+        </form>
+        <button onclick="deleteSkelbimas('{{ skelbimas.id }}')">Ištrinti skelbimą</button>
+            {% endif %}
+        {% endif %}
+        {% if skelbimas.busena == 'aktyvus' %}
+            {% if lankytojas.id != skelbimas.kurejas.id %}
+                <form action="{% url 'skelbimo_busena_view' %}" method="get" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+                    <input type="hidden" name="busena" value="rezervuotas">
+                    <button type="submit">Rezervuoti</button>
+                </form>
+                <form action="{% url 'skelbimo_busena_view' %}" method="get" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+                    <input type="hidden" name="busena" value="parduotas">
+                    <button type="submit">Pirkti</button>
+                </form>
+            {% endif %}
+        {% endif %}
+        {% if skelbimas.busena == 'rezervuotas' %}
+            {% if lankytojas.id == skelbimas.klientas.id %}
+                {% if lankytojas.id != skelbimas.kurejas.id %}
+                    <form action="{% url 'skelbimo_busena_view' %}" method="get" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+                        <input type="hidden" name="busena" value="aktyvus">
+                        <button type="submit">Atšaukti rezervaciją</button>
+                    </form>
+                    <form action="{% url 'skelbimo_busena_view' %}" method="get" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+                        <input type="hidden" name="busena" value="parduotas">
+                        <button type="submit">Pirkti</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</body>
+</html>

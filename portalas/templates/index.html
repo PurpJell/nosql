@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Index</title>
+</head>
+<body>
+    {% csrf_token %}
+    {% if user.is_authenticated %}
+        <p>Hello, {{ user.username }}!</p>
+        <form action="{% url 'logout_view' %}" method="get" style="display:inline;">
+            <button type="submit">Logout</button>
+        </form>
+
+        <form action="{% url 'skelbimai_view' %}" method="get" style="display:inline;">
+            <button type="submit">Skelbimai</button>
+        </form>
+
+        <form action="{% url 'skelbimu_kategorijos_view' %}" method="get" style="display:inline;">
+            <button type="submit">Kategorijos</button>
+        </form>
+
+        <form action="{% url 'profile_view' %}" method="get" style="display:inline;">
+            <button type="submit">Mano profilis</button>
+        </form>
+    {% else %}
+        <p>Hello, Anonymous!</p>
+        <form action="{% url 'login_view' %}" method="get" style="display:inline;">
+            <button type="submit">Login</button>
+        </form>
+    {% endif %}
+    <p>index</p>
+</body>
+</html>

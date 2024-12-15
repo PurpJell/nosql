@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Valdyti skelbimą</title>
+</head>
+<body>
+    <h1>Valdyti skelbimą</h1>
+    <p>Skelbimas: {{ skelbimas.pavadinimas }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="kategorija" value="{{ kategorija.id }}">
+        <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+        {{ form.as_p }}
+        <button type="submit">Išsaugoti</button>
+    </form>
+    <form action="{% url 'konkretus_skelbimas_view' %}" method="get" style="display:inline;">
+        <input type="hidden" name="skelbimas" value="{{ skelbimas.id }}">
+        <button type="submit">Atšaukti</button>
+    </form>
+</body>
+</html>
