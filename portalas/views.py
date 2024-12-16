@@ -26,8 +26,6 @@ def register_view(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             vartotojas = form.save()
-            user_id = vartotojas.django_user_id
-            print(user_id)
             return render(request, 'index.html')
         else:
             return render(request, 'register.html', {'form': form})
@@ -119,8 +117,10 @@ def skelbimu_kategorijos_view(request):
         else:
             parent = None
 
+        vartotojas = Vartotojas.objects.get(django_user_id=str(request.user.id))
+
         kategorijos = Skelbimu_kategorija.objects.filter(motinine_kategorija=parent)
-        return render(request, 'skelbimu_kategorijos.html', {'kategorijos': kategorijos, 'parent': parent})
+        return render(request, 'skelbimu_kategorijos.html', {'kategorijos': kategorijos, 'parent': parent, 'vartotojas': vartotojas})
     
     
 @require_http_methods(["GET", "POST", "DELETE"])

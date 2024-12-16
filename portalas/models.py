@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 
 class Vartotojas(Document):
-    django_user_id = StringField()
+    django_user_id = StringField(index=True)
     vartotojo_vardas = StringField(max_length=100, unique=True, required=True)
     vardas = StringField(max_length=100, required=True)
     pavarde = StringField(max_length=100, required=True)

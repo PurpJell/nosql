@@ -30,7 +30,7 @@
 <body>
     <h1>Skelbimų kategorijos</h1>
 
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and vartotojas.vaidmuo == 'administratorius' %}
     <form action="{% url 'update_kategorija_view' %}" method="get">
         {% csrf_token %}
         <input type="hidden" name="parent" value="{{ parent.id }}">

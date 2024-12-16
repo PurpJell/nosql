@@ -37,8 +37,6 @@ class RegisterForm(forms.Form):
             last_name=data['pavarde']
         )
 
-        print(user.id)
-
         vartotojas = Vartotojas(
             django_user_id=str(user.id),
             vartotojo_vardas=data['vartotojo_vardas'],
